@@ -1,0 +1,474 @@
+%%%%%PLEASE CONSIDER CORRECTIONS AT PLACES INDICATED%%%%%%%%
+\documentclass{discussion}
+%%%%%Packages Used, add more if necessary%%%%
+\providecommand{\tightlist}{%
+\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}} 
+
+\begin{document}
+
+%%%%%CHANGE HERE%%%%%%%%%
+%%%%%\lecture{the ordinal number of the tutorial}{lecture title}{Instructor's name}%%%%%%%%
+\lecture{4}{Connecting the Dots}{Chansoo Lee}
+
+%%%%%CHANGE HERE%%%%%%%
+%%%%%\section{title of the section} similarly with the rest \section{} or \subsection{} or \subsubsection{} etc
+
+   
+
+
+\renewcommand{\R}{\mathbb{R}}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\Dtrain}{\mathcal{D}_{\mathrm{train}}}
+\newcommand{\tm}{\mathbf{\theta}_{\text{model}}}
+\newcommand{\xtest}{\mathbf{\x}_{\text{test}}}
+\newcommand{\test}{\mathrm{test}}
+\newcommand{\pred}{\mathrm{pred}}
+
+Let me begin with a few notes on formatting; in the main text, that is excluding the titles, headers, and boxed notes,
+\begin{itemize}
+\tightlist
+  \item Double quotes `` '' are used when I intentionally use a term that
+is not mathematically well-defined. 
+\item Italicized words are somewhat important jargons that may be repeatedly used.
+\item  Boldfaced letters are used for very important terms that you must absolutely know inside out if you want to claim you've taken a course in ML.
+\end{itemize}
+
+\section{Supervised learning: the first
+steps}\label{supervised-learning-the-first-steps}
+
+\paragraph{What is our task?}\label{what-is-our-task}
+
+\begin{itemize}
+\tightlist
+\item
+  We want to make \textbf{predictions} about unseen data (called
+  \textbf{test data}).
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Example 1: Instagram wants to predict if a new image is offensive or
+    not. (\textbf{Binary classification} problem)
+  \item
+    Example 2: A pharmaceutical company wants to predict a drug's shelf
+    life. (\textbf{Regression} problem)
+  \item
+    Example 3: Gmail wants to predict if a new email goes to
+    inbox/forum/promotions/updates. (\textbf{Multiclass classification}
+    problem)
+  \end{itemize}
+\end{itemize}
+
+\paragraph{What are we given?}\label{what-are-we-given}
+
+\begin{itemize}
+\tightlist
+\item
+  We have access to \textbf{labeled training data}, which is a
+  collection of pairs of \emph{input} and \textbf{target value}. We use
+  the following notation:
+  \(\Dtrain = \{(x_1, t_1) \ldots, (x_n, t_n)\}\).
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Example 1: Instgram had people on Mechanical Turk manually identify
+    offensive images.
+  \item
+    Example 2: The company has information on existing drugs.
+  \item
+    Example 3: Gmail users label their emails.
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Where do we start?}\label{where-do-we-start}
+
+\begin{itemize}
+\tightlist
+\item
+  We choose the representation of data, called \textbf{features}.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Example 1: We \emph{vectorize} the RGB values of an image: 400x300
+    image will be represented as 360K-dimensional vector.
+  \item
+    Example 2: For each commonly used active ingredient, we have
+    true/false value.
+  \item
+    Example 3: We count the word frequencies and construct a frequency
+    vector.
+  \end{itemize}
+\end{itemize}
+
+\paragraph{What is the \(\phi\) or
+\(\Phi\)
+nonsense by the way?}
+
+\begin{itemize}
+\tightlist
+\item  We often use $\phi(x)$ to denote the features of a single input, and
+  $\Phi$ to denote the \textbf{design matrix}. AFAIK this is an old
+  convention from the time when kernel methods were popular. It is
+  indeed very safe to ignore the \(\phi\) altogether and think in terms
+  of \(\vec{x}\) and \(X\) instead.
+\end{itemize}
+
+\section{Model}\label{model}
+  Once we extract features, we choose a \textbf{model}, which reflects our
+  assumptions about data. We will have to build a new model if none of the
+    existing ones suits our need.  We will denote the model \textbf{parameters} by \(\tm\). (This is a ``placeholder'' notation that can have multiple types. For logistic regression it is a  vector, for Naive Bayes, it is both the prior $\pi$ and posterior $\theta_{\text{lots of subscripts}}$ 
+
+    We say that a model is \textbf{probablistic}, if it treats data as random
+  variables. Practically speaking it defines $P(\vec{x}, t; \tm)$, the probabilities of possible values of data. 
+
+\vspace{1em}
+\fbox{
+  \parbox{\textwidth-2em}{\emph{Optional tip}: In terms of OOP,
+ a model corresponds to a \emph{class} who has a member variable $\tm$. It is \emph{instantiated} by setting $\tm$ to be a particular value.
+}}
+
+\subsection{Probabilistic models we have learned so
+far}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Linear regression} has parameter \(\vec{w}\), called the
+  weight vector.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    The target value \(t\) can take any real number.
+  \item
+    Linear regression model is probabalistic: a data \((\vec{x}, t)\) has probability
+    \(f_{\mathcal{N}(0,1)}(t - \vec{w}^\top\vec{x}) = f_{\mathcal{N}(\vec{w}^\top\vec{x}, 1)}(t)\)
+    where \(f_{\mathcal{N(\mu,\gamma)}}\) is the pdf of Gaussian
+    distribution with mean \(\mu\) and variance \(\gamma\).
+  \item
+    The reflected assumption is that the target value \(t\) is
+    \emph{cocentrated} (centered closely around) a linear combination of
+    features.
+  \end{itemize}
+\item
+  \textbf{Logistic regression} has parameter \(\vec{w}\), called the
+  weight vector.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    The target value \(t\) is a \emph{binary label} (1=True or 0=False).
+  \item
+    Logistic regression model is again probablistic: a data \((\vec{x}, t)\) has
+    probability \(\sigma(\vec{w}^\top\vec{x})\) if \(t = 1\), and
+    probability \(1 - \sigma(\vec{w}^\top\vec{x})\) if \(t = 0\).
+  \item
+    The reflected assumption is that the probability \(t = 1\) scales
+    nonlinearly in a linear combination of features.
+  \end{itemize}
+\item
+  \textbf{Softmax regression} has parameter
+  \(\vec{w}_1, \ldots, \vec{w}_C\), where \(C\) is the number of class
+  labels.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    The target value \(t\) is a class label \((1, \ldots, C)\).
+  \item
+    A data \((\vec{x}, t = k)\) has probability \emph{proportional to}
+    \(\sigma(\vec{w}_k^\top\vec{x})\).
+  \end{itemize}
+\item
+  \textbf{Naive Bayes} has parameters \(\pi_1, \ldots, \pi_C\) (prior)
+  and
+  \(\{\theta_{cdm}: c = 1,\ldots, C, d = 1,\ldots, D, m = 1,\ldots, M\}\)
+
+  \begin{itemize}
+  \tightlist
+  \item
+    The target value \(t\) is a class label \((1, \ldots, C)\).
+  \item
+    Naive Bayes model builds upon the \textbf{conditional
+    independence} assumption.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Non-probablistic Model}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{SVM} has parameters \(\vec{w}\) and \(b\).
+
+  \begin{itemize}
+  \tightlist
+  \item
+    The target value \(t\) is a binary class label, this time \(-1\) or
+    \(+1\) (instead of 0 or 1), to save ourselves from future
+    disaster.
+  \item
+    SVM model is not probablistic. We have a deterministic process of
+    computing \(t = \mathrm{sign}(\vec{w}^\top \vec{x} + b)\).
+  \item
+    Assumption: We have a \textbf{hyperplane} separating two classes. Hyperplane is simply a \((N-1)\)-dimensional thingy in \(N\)-dimensional space: for example, a point in number line and a line in x-y coordinate.
+  \end{itemize}
+\end{itemize}
+
+% \begin{center}\rule{0.5\linewidth}{\linethickness}\end{center}
+
+\fbox{\parbox{\textwidth-2em}{
+\emph{Advanced reading}: SVM \emph{can} be
+viewed as a probablistic model. If you are interested, read
+\url{http://www.icml-2011.org/papers/386_icmlpaper.pdf}
+}}
+
+\section{Prediction}\label{prediction}
+
+\emph{Notations}: now we are given a new input \(\vec{x}_\test\) and we want to
+predict the unknown value \(t_\test\). We will omit the subscript in this subsection because it is clear from the context.
+
+\paragraph{The choice of model dictates how we make
+predictions.}\label{the-choice-of-model-dictates-how-we-make-predictions.}
+
+
+\begin{itemize}
+\item
+  \textbf{Linear regression} has parameter \(\vec{w}\), called the
+  weight vector.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Our model is probabalistic: a data \((\vec{x}, t)\) has probability
+    \(f_{\mathcal{N}(0,1)}(t - \vec{w}^\top\vec{x}) = f_{\mathcal{N}(\vec{w}^\top\vec{x}, 1)}(t)\)
+    where \(f_{\mathcal{N(\mu,\gamma)}}\) is the pdf of Gaussian
+    distribution with mean \(\mu\) and variance \(\gamma\).
+  \item
+    We might as well predict the peak of this bell curve,
+    \(t_\pred = \vec{w}^\top\vec{x}\).
+  \end{itemize}
+\item
+  \textbf{Logistic regression} has parameter \(\vec{w}\), called the
+  weight vector.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Our model is again probablistic: a data \((\vec{x}, t)\) has
+    probability \(\sigma(\vec{w}^\top\vec{x})\) if \(t = 1\), and
+    probability \(1 - \sigma(\vec{w}^\top\vec{x})\) if \(t = 0\).
+  \item
+    We might as well predict the \(t_\pred\) that gives the higher
+    probability.
+  \end{itemize}
+\item
+  \textbf{Softmax regression} has parameter
+  \(\vec{w}_1, \ldots, \vec{w}_C\), where \(C\) is the number of class
+  labels.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    A data \((\vec{x}, t = k)\) has probability \emph{proportional to}
+    \(\sigma(\vec{w}_k^\top\vec{x})\).
+  \item
+    We might as well predict the \(t_\pred\) that gives the highest
+    probability.
+  \end{itemize}
+\item
+  \textbf{Naive Bayes}.. you get the idea.
+\item
+  \textbf{SVM} is a bit different story here; it is defined to make a
+  deterministic prediction
+  \(t = \mathrm{sign}(\vec{w}^\top \vec{x} + b)\).
+\end{itemize}
+
+\section{(Parameter) Estimation aka
+Training}\label{parameter-estimation-aka-training}
+
+Estimation is the process of using the training data to find the
+``best'' model parameters that we think will perform best on the
+(unseen) test data. Estimation can be broken into two steps: we first
+define the ``best'', and then actually find it.
+
+\subsection{Objective function}\label{objective-function}
+
+\paragraph{How do you define the
+``best''?}
+\label{how-do-you-define-the-best}
+
+\begin{itemize}
+\tightlist
+\item
+  We define an \textbf{objective function} (also called \textbf{error
+  function} or \textbf{penalty function}) for the model, often denoted
+  \(E\) and sometimes \(J\) or \(F\) or pretty much any letter. The
+  ``best'' parameters are the ones that minimize this function \(E\).
+\item
+  \emph{Note}: Because we define \(E\) after we choose our model, we
+  don't have to write \(E_{\text{linear regression}}\) or
+  \(E_{\text{logistic regression}}\). It should be clear from the
+  context.
+\end{itemize}
+
+
+\fbox{\parbox{\textwidth-2em}{
+\emph{Optional tip}: The function \(E\) can be considered as taking input of
+type \emph{{[}model{]}.parameters}, where {[}model{]} can be linear
+regression, logistic regression, etc.}}
+
+\subsubsection{Canonical objective function: Negative Log Likelihood
+(LL)}\label{example-objective-function-negative-log-likelihood-ll}
+
+  The likelihood \(L\) is a function of model parameters that returns a
+  non-negative number: \[L(\tm) = P(\Dtrain; \tm).\]
+
+   Minimizing \(-L(\tm)\) is equivalent to minimizing \(-\log L(\tm)\),
+  because \(\log\) is an increasing function well-defined over positive
+  numbers, and \(L(\tm)\) is always non-negative. Keep in mind that \(L(\tm) = 0\) case needs to be   handled separately and carefully, although we often glance over this. (Why?)
+
+  \textbf{Maximum likelihood estimate} of \(\tm\) is the maximizer of
+  the likelihood function, which is equivalent to the minimizer of the
+  negative LL (up to the aforementioned subtleties).
+
+\subparagraph{A couple of notes on the notations}
+\begin{itemize}
+  \item Similarly to the \(E\) notation, because log
+likelihood only makes sense after we choose our model, we omit the
+subscripts such as \(L_{\text{linear regression}}\).
+  \item Semi-colons are
+used to emphasize the distinction between model parameters and random
+variables. Recall that a probabilistic model defines the probability of
+observing a particular data. It is more natural to say that this
+probability is \emph{determined by} the parameters as opposed to
+\emph{conditioned on} the parameter values. For mathematical operations,
+\(P(A | B; C) = P(A | B, C)\).
+\end{itemize}
+
+\subparagraph{Why is negative LL a good objective
+function?}\label{why-is-negative-ll-a-good-objective-function}
+
+\begin{itemize}
+\tightlist
+\item
+  It is a very good objective function if we make the following
+  assumption: train and test data are all \textbf{iid (independently and
+  identically distributed) samples} from the same distribution
+  \(\mathcal{F}\), and we have a ``large enough'' training set.  Mathematical reasoning is as follows:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Suppose we have a model with parameter \(\theta\).
+  \item
+    We get a new unseen data
+    \((\vec{x}_\test, t_\test) \sim \mathcal{F}\), where \(t_\test\) is
+    unknown value to be predicted by our model.
+  \item
+    Because we have a ``large enough'' training set, by our iid
+    assumption, sampling \((\vec{x}_\test, t_\test)\) from
+    \(\mathcal{F}\) is not too different from picking a random training
+    example \((\vec{x}_i, t_i)\) from \(\Dtrain\).
+  \item
+    So, \(P(\vec{x}_\test, t_\test; \theta)\), the probability of making
+    a correct prediction on unseen data, is higher if
+    \(P(\Dtrain; \theta)\) is high.
+  \end{itemize}
+\item
+  For practical reasons, it is convenient that the math works out nicely:
+  \[\log P(\Dtrain; \tm) = \log \prod_{i} P(\vec{x}_i, t_i; \tm) = \sum_{i} \log P(\vec{x}_i, t_i; \tm).\]
+\end{itemize}
+
+
+\subsubsection{Maximum A P-unspellable Estimate}
+
+\begin{itemize}
+\tightlist
+\item
+  The ``large-enough'' and iid assumptions don't generally hold true,
+  and we as humans have a good idea about what model parameters would
+  \textbf{generalize better} (i.e., work better on unseen data). We
+  build this preference into the model by defining a \textbf{prior}
+  \(P(\tm)\). This introduces a bit of black art into our mathematically
+  beautiful but practically useless models.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \emph{Example}: Regularized linear regression, where we define our
+    prior
+    \(P(\vec{w}) = f_{\mathcal{N}(\vec{0}, \alpha^{-1}I)}(\vec{w})\)
+    which means we prefer \(\vec{w}\) with small 2-norm.
+  \end{itemize}
+\item
+  \textbf{Maximum a posteriori} (MAP) estimate is the maximizer of a
+  \textbf{posterior probability} of parameter given data.
+  Mathematically,
+  \[\theta_{\mathrm{MAP}} = \arg\max_{\tm} P(\tm; \Dtrain)\] or
+  equivalently, in the objective function framework:
+  \[E(\tm) = -P(\tm; \Dtrain).\]
+\item
+  MAP estimate definition looks quite different from MLE. After the
+  application of Bayes rule, however, it is really just one extra term
+  compared to MLE:
+  \[\arg\max P(\tm; \Dtrain) = \arg\max P(\Dtrain; \tm) P(\tm)\] or
+  equivalently, in the objective function framework:
+  \[E(\tm) = -P(\Dtrain; \tm)P(\tm).\]
+\end{itemize}
+
+\subsubsection{Non-probabilistic objective functions}
+Again, SVM is unique among the models we learned in that it is not a
+probabilistic model and uses the \textbf{hinge loss} function.
+
+\section{Optimization}\label{optimization}
+
+Now the final step is: how do we find the ``best''
+parameters? This is where math gets very dense. We've already learned and applied a few different optimization methods. Assuming that \(E\) is convex,
+
+\begin{enumerate}[(i)]
+\tightlist
+\item
+  Find \(\theta\) such that \(\nabla E(\theta) = 0\).
+  \begin{itemize}
+  \tightlist
+  \item
+    \emph{Example}: Pseudoinverse method for linear
+    regression (MLE and MAP), finding MLE for Bernoulli random variables (Heads or tails coin flip example), MLE for Naive Bayes, etc.
+  \end{itemize}
+\item
+  Gradient descent (Batch or stochastic)
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Recall the definition of gradient, and understand why it makes sense
+    to continually move in the opposite direction of the gradient.
+  \item
+    \emph{Advanced reading}: SGD works very well in practice
+    even for non-convex functions. \url{https://arxiv.org/abs/1509.01240}
+  \item
+    \emph{Example}: GD for linear and logistic regression, GD for SVM.
+  \end{itemize}
+\item
+  Newton's method
+  \begin{itemize}
+  \tightlist
+  \item
+    Requires Hessian, the second derivative.
+  \end{itemize}
+\end{enumerate}
+
+    \subsection{Misc}\label{misc}
+
+I hope you now better understand why we need a lot of heavy math. If you are still not convinced, please keep in mind that you do not need to take a course in machine learning to be able to \emph{use} machine learning. This course teaches you to be a machine learning
+\emph{scientist}. That means, after taking this course, you will at the very least
+\begin{itemize}
+  \tightlist
+  \item have a deep understanding of the assumptions and limits of most commonly used models
+  \item be able to tweak the existing models or develop a new one to suit
+your particular needs.
+\end{itemize}
+\end{document}
