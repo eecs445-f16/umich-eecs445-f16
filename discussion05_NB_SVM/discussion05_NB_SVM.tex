@@ -152,7 +152,7 @@ In the HW, you will show that the above is equivalent to
 \newcommand{\Lhinge}{L_{\text{hinge}}}
 \begin{equation}
 \label{eq:svm_primal}
-    \arg\min_{\mathbf{w}, b} \lambda\|\mathbf{w}\|^2 + \sum_i \max(0,1 - \ci).
+    \arg\min_{\mathbf{w}, b} \lambda\|\mathbf{w}\|^2 + \sum_i \max(0,1 - (\ci)).
 \end{equation}
 % where $\Lhinge(\w;\x_i) =\max(0,1 - \ci)$
 \begin{exercise}
@@ -168,11 +168,16 @@ The dual formulation optimizes over a vector in $\mathbb{R}^N$, instead of $\mat
     \text{subject to} \quad & 0 \leq \alpha_i \leq C/n \quad \forall i\ \\
     \quad & \sum \nolimits_{i=1}^n \alpha_i t_i = 0    
     \end{align*} 
-
-The term support vector comes from the fact that the solution is a linear combination of examples.
+Given a solution to the dual problem, we can get the primal solution, and vice versa. The main (arguably the only) reason we study the SVM dual formulation is that it helps us observe that the optimal  $\w^*$ is a linear combination of examples:
 \[\boxed{ \w^* = \sum \nolimits_{i=1}^N \alpha_i^* t_i \x_i }\]
+The name ``support vector'' comes from this observation.
 
 Because we know that the optimal $\w^*$ is a linear combination of $\x_i$, we can rewrite \eqref{eq:svm_primal} as:
+\begin{equation}
+    \arg\min_{\vec{\alpha},b} \lambda\|\mathbf{w}\|^2 + \sum_{i=1}^{N} \max\left(0, 1 - t_i\left( \left(\sum_{j=1}^{N} \alpha_j \x_j\right)^\top \x_i + b\right)\right).
+\end{equation}
+
+Using kernelized features, we get
 \begin{equation}
     \arg\min_{\vec{\alpha}} \lambda\|\mathbf{w}\|^2 + \sum_{i=1}^{N} \max\left(0, 1 - t_i \left(\sum_{j=1}^{N} \alpha_j \phi(\x_j)\right)^\top \phi(\x_i)\right).
 \end{equation}
