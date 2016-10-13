@@ -1,0 +1,187 @@
+%%%%%PLEASE CONSIDER CORRECTIONS AT PLACES INDICATED%%%%%%%%
+\documentclass{discussion}
+%%%%%Packages Used, add more if necessary%%%%
+\providecommand{\tightlist}{%
+\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}} 
+
+\begin{document}
+
+%%%%%CHANGE HERE%%%%%%%%%
+%%%%%\lecture{the ordinal number of the tutorial}{lecture title}{Instructor's name}%%%%%%%%
+\lecture{5}{Naive Bayes and SVM}{Chansoo Lee}{}
+
+%%%%%CHANGE HERE%%%%%%%
+%%%%%\section{title of the section} similarly with the rest \section{} or \subsection{} or \subsubsection{} etc
+
+   
+\renewcommand{\R}{\mathbb{R}}
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+\newcommand{\Dtrain}{\mathcal{D}_{\mathrm{train}}}
+\newcommand{\tm}{\mathbf{\theta}_{\text{model}}}
+\newcommand{\xtest}{\mathbf{\x}_{\text{test}}}
+\newcommand{\test}{\mathrm{test}}
+\newcommand{\pred}{\mathrm{pred}}
+
+\section{Naive Bayes}
+\emph{Notations:} Let $C$ be number of classes, $D$ be the number of features, and $M$ be the number of values each feature can take. The Naive Bayes prior parameters are $\vec{\pi}$ and posterior parameters are $\{\vec{\theta}_{cd}: c=1,\ldots,C, d = 1,\ldots,D\}$. For simplicity we simply use $\pi, \theta$ when discussing them as general parameters and thus dimensions are not important in the context.
+\subsection{Naive Bayes: MLE}
+
+
+\begin{exercise}[Review Question]
+ What are the semantics of these parameters? What are the dimensions of $\vec{\pi}$ and $\vec{\theta}_{cd}$? They are called \emph{probability vectors}. What is the key property?
+
+ \textit{The individual elements of a probability vector sums up to 1.}
+\end{exercise}
+
+Furthermore, suppose $M=2$. When dealing with sparse features such that $x_{d}$ is rarely 1 (\texttt{Spambase} data in HW2, after our preprocessing step, has this property), we only see a small number of examples to accurately estimate $\theta_{cd1}$.  This causes overfitting. (\emph{Understand exactly why this is the case.})
+
+\begin{exercise}
+\label{ex:always1}
+  Discuss what happens if $x_d = 1$ for every training example $x$, regardless of its class label? What happens if we recieve a test data with $x_d = 0$?
+\end{exercise}
+
+\subsection{Naive Bayes: Mean estimate}
+The overfitting problem can be fixed by putting Dirichlet priors on $\vec{\pi}$. Dirichlet distribution over $M$-dimensional probability vector, parameterized by a vector $\vec{\alpha} \in \mathbb{R}^{M}$ of positive values, has the following probability density function:
+\[p(\vec{u}; \vec{\alpha}) = Z(\vec{\alpha}) u_{1}^{\alpha_1 - 1} \cdots u_{M}^{\alpha_{M}-1}\]
+where $Z(\vec{\alpha})$ is the normalizing constant, which makes the above function integrates to 1.
+
+\begin{exercise} Let's inspect the Dirichlet pdf.
+\begin{itemize}
+  \item   Fix every coordinates but $\alpha_1$, and increase $\alpha_1$. What happens to the distribution of $u_1$? What would happen to the mean of $u_1?$.
+
+  \textit{We are more likely to get a high value, so the mean would increase.}
+  \item Set all coordinates of $\vec{\alpha}$ to $\lambda$. As you increase $\lambda$, what would happen to the expected value of $\vec{u}$?
+
+  \textit{The expected value is always $\vec{u} = (1/M, \ldots, 1/M)^\top$  because the sum $\sum_{i=1}^{M}u_i$ is constrained to be 1 and pdf is symmetric.}
+\end{itemize}
+\end{exercise}
+
+
+With Dirichlet prior, we can do the MAP estimate as usual
+\[(\hat{\pi}, \hat{\theta}) = \arg\max_{\pi,\theta} P(\theta,\pi | \mathcal{D}_{\text{train}}).\]
+But unfortunately the expression for the maximizer isn't very pretty (functionally they are fine). So, we use the mean estimate instead:
+\[\hat{\pi} = E[\pi| \mathcal{D}_{\text{train}}], \ \
+ \hat{\theta} = E[\theta | \mathcal{D}_{\text{train}}]\]
+where $\vec{\pi} \sim \text{Dirichlet}(\vec{\alpha})$ and $\theta_{cd} \sim \text{Dirichlet}(\vec{\beta}_{cd}).$ If we compute the means, we get
+\[\hat{\pi}_c = \frac{N_c + \alpha_c}{N + \sum_{c} \alpha_c}, \ \ 
+\hat{\theta}_{cdm} = \frac{N_{cdm} + \beta_{cdm}}{N_c + \sum_{m'} \beta_{cdm'}} \]
+
+\begin{exercise} Redo Exercise \ref{ex:always1}. What happens at the prediction time?
+\end{exercise}
+
+
+\section{SVM}
+\newcommand{\w}{\mathbf{w}}
+\renewcommand{\x}{\mathbf{x}}
+\renewcommand{\c}[1]{t_{#1} (\w^\top \x_{#1}) + b}
+\newcommand{\ci}{\c{i}}
+Let $\{(\x_i, t_i) \in \mathbb{R}^D \times \{-1,1\}\}_{i=1}^{N}$ be our training set.
+
+
+Hyperplane is a \emph{set} of $D$-dimensional vectors that ``constitute'' an $(D-1)$ dimensional object. The key here is \emph{set}, as a hyperplane is usually described in the form of:
+\[\{\vec{v}: \mathbf{w}^\top \vec{v} + b = 0\}.\]
+The distance between the above hyperplane and a point $\mathbf{x}$ is
+\[\frac{|\mathbf{w}^\top \mathbf{x} + b|}{\|\mathbf{w}\|}.\]
+
+% Throught the section, we use the shorthand notation $\ci = t_i (\w^\top \x_i) + b$. Don't forget it is a function of both the model $(\w^\top,b)$ and data $(\x_i, t_i)$.
+
+\subsection{Hard SVM}
+The Hard SVM maximizes the \emph{margin distance}, which is the minimum distance between a point and the hyperplane $\{\vec{v}: \mathbf{w}^\top \vec{v} + b = 0\}$:
+\begin{equation}
+\label{eq:hardsvm}
+  \arg\max_{\mathbf{w}, b} \min_{i = 1,\ldots, N} \frac{|\mathbf{w}^\top \mathbf{x}_i + b|}{\|\mathbf{w}\|} \ \ \text{such that $\ci > 0$ for all $i$.}
+\end{equation}
+\begin{exercise}(Review)Does the solution always exist? What is the condition under which the solution exists? 
+\end{exercise}
+
+When the solution exists, \eqref{eq:hardsvm} is equivalent to
+\begin{equation}
+\label{eq:hardsvmci}
+  \arg\max_{\mathbf{w}, b} \min_{i = 1,\ldots, N} \frac{\ci}{\|\mathbf{w}\|} \ \ \text{such that $\ci > 0$ for all $i$.}
+\end{equation}
+
+\begin{exercise}
+Show the equivalence of \eqref{eq:hardsvm} and \eqref{eq:hardsvmci}.
+\end{exercise}
+
+\begin{exercise}(Review) Given a solution $(\w^*,b^*)$ to the above, can we generate another solution? 
+\emph{Hint: As you scale $(\w^*,b^*)$ with $\gamma$ and set $\w = \gamma\w^*$ and $b = \gamma b^*$, what happens to $t_i (\w^\top \x_i) + b$?}
+% \emph{You can scale both with a constant $\gamma$ and objective function value remains the same.}
+\end{exercise}
+
+By fixing $\c{i^*} = 1$ for the minizer $i^*$, we get an optimization problem whose unique solution is the maximizer of (to be precise, \emph{one of} the maximizers of) \eqref{eq:hardsvmci}:
+\begin{equation}
+    \arg\max_{\mathbf{w}, b} \min_{i = 1,\ldots, N} \frac{\ci}{\|\mathbf{w}\|}  \ \text{such that $\ci = 1$ for some $i$ and $\ci \geq 1$ for all other $i$.}
+\end{equation}
+
+The above is equivalent to 
+\begin{equation}
+    \arg\max_{\mathbf{w}, b} \frac{1}{\|\mathbf{w}\|}  \ \text{such that $\ci = 1$ for some $i$ and $\ci \geq 1$ for all other $i$.}
+\end{equation}
+which is again equivalent to 
+\begin{equation}
+    \arg\min_{\mathbf{w}, b} \|\mathbf{w}\|  \ \text{such that $\ci = 1$ for some $i$ and $\ci \geq 1$ for all other $i$.}
+\end{equation}
+
+\begin{exercise}
+Show that the above is equivalent to
+\begin{equation}
+\label{eq:hardsvm_primal}
+    \arg\min_{\mathbf{w}, b} \|\mathbf{w}\|  \ \text{such that $\ci \geq 1$ for all $i$.}
+\end{equation}
+
+\emph{Proof technique: Suppose our minimizer $(\w^*, b^*)$ gives $\min_i t_i({\w^*}^\top \x_i) > 1$. Can you find a better $(\w, b)$ and get a contradictiction?}
+\end{exercise}
+
+Now we can change $\|\w\|$ into any increasing function of $\|\w\|$ (like we changed likelihood to log likelihood). So why not something that looks exactly like our regularizer for linear and logistic regression?
+\begin{equation}
+    \arg\min_{\mathbf{w}, b} \lambda\|\mathbf{w}\|^2  \ \text{such that $\ci \geq 1$ for all $i$.}
+\end{equation}
+where $\lambda >0 $ is the regularization coefficient.
+
+\subsection{Soft-SVM}
+
+We relax the problem so that we allow $c_i$ to be less than 1 (\textbf{margin error}), but we add a penalty term.
+
+\begin{equation}
+    \arg\min_{\mathbf{w}, b, \vec{\xi}} \lambda\|\mathbf{w}\|^2 + \sum_{i=1}^{N} \xi_i \ \text{such that $\ci \geq 1 - \xi_i$ and $\xi_ \geq 0$ for all $i$.}
+\end{equation}
+
+In the HW, you will show that the above is equivalent to 
+
+\newcommand{\Lhinge}{L_{\text{hinge}}}
+\begin{equation}
+\label{eq:svm_primal}
+    \arg\min_{\mathbf{w}, b} \lambda\|\mathbf{w}\|^2 + \sum_i \max(0,1 - \ci).
+\end{equation}
+% where $\Lhinge(\w;\x_i) =\max(0,1 - \ci)$
+\begin{exercise}
+  Plot the \textbf{hinge loss} function $f(z) = \max(0, 1 - z)$. What does it look like? What does the SVM penalty function do intuitively? How is it different from RMSE?
+\end{exercise}
+
+
+\subsection{Duality and Kernel}
+
+The dual formulation optimizes over a vector in $\mathbb{R}^N$, instead of $\mathbb{R}^D$.
+    \begin{align*}
+    \underset{\vec{\alpha}}{\text{maximize}} \quad &  -0.5 \sum \nolimits_{i,j = 1}^N \alpha_i \alpha_j t_i t_j \x_i^\top \x_j + \sum \nolimits_{i = 1}^N \alpha_i\\
+    \text{subject to} \quad & 0 \leq \alpha_i \leq C/n \quad \forall i\ \\
+    \quad & \sum \nolimits_{i=1}^n \alpha_i t_i = 0    
+    \end{align*} 
+
+The term support vector comes from the fact that the solution is a linear combination of examples.
+\[\boxed{ \w^* = \sum \nolimits_{i=1}^N \alpha_i^* t_i \x_i }\]
+
+Because we know that the optimal $\w^*$ is a linear combination of $\x_i$, we can rewrite \eqref{eq:svm_primal} as:
+\begin{equation}
+    \arg\min_{\vec{\alpha}} \lambda\|\mathbf{w}\|^2 + \sum_{i=1}^{N} \max\left(0, 1 - t_i \left(\sum_{j=1}^{N} \alpha_j \phi(\x_j)\right)^\top \phi(\x_i)\right).
+\end{equation}
+The bias term is removed because we can always add a bias coordinate in our feature mapping $\phi(\x_j)$.
+
+\begin{exercise}
+  Take the gradient of the objective function. In particular, take the derivative with respect to $\alpha_k$.
+\end{exercise} 
+
+Observe that the derivative depends only on the dot product of the features. So we can implement the gradient descent as long as the dot products are well-defined, even if we are in infinite-dimensional space.
+
+\end{document}
