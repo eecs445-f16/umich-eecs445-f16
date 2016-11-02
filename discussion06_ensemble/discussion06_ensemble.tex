@@ -1,0 +1,188 @@
+%%%%%PLEASE CONSIDER CORRECTIONS AT PLACES INDICATED%%%%%%%%
+\documentclass{discussion}
+%%%%%Packages Used, add more if necessary%%%%
+\providecommand{\tightlist}{%
+\setlength{\itemsep}{2pt}\setlength{\parskip}{0pt}} 
+
+
+\newenvironment{answer}
+  {\vspace{-1em}\begin{proof}[Answer]}
+  {\end{proof}}
+
+\usepackage[ruled]{algorithm2e}
+\begin{document}
+
+%%%%%CHANGE HERE%%%%%%%%%
+%%%%%\lecture{the ordinal number of the tutorial}{lecture title}{Instructor's name}%%%%%%%%
+\lecture{6}{Ensemble Methods}{Chansoo Lee}{}
+
+%%%%%CHANGE HERE%%%%%%%
+%%%%%\section{title of the section} similarly with the rest \section{} or \subsection{} or \subsubsection{} etc
+
+   
+\renewcommand{\R}{\mathbb{R}}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\Dtrain}{\mathcal{D}_{\mathrm{train}}}
+\newcommand{\tm}{\mathbf{\theta}_{\text{model}}}
+\newcommand{\xtest}{\mathbf{\x}_{\text{test}}}
+\newcommand{\test}{\mathrm{test}}
+\newcommand{\pred}{\mathrm{pred}}
+
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\F}{F}
+\newcommand{\WL}{\mathrm{WL}}
+\section{Important Concepts}
+\paragraph{True vs Empirical Risk} Simply put,  \emph{risk} is the \emph{expected loss}. If we take the expectation over true data distribution, we get true risk. If we take the expectation over \emph{empirical probability density estimate} (which is uniform over a finite data, HW3 problem 2), we get empirical risk.
+
+Now, let us define these formally. Suppose the data is i.i.d. samples from a distribution $Q$. Then, the \emph{true risk} (or simply \emph{risk}) of hypothesis $h$ is the expectation of the loss function $\ell$ over $Q$:
+\[R(h) = \mathbb{E}_{(\mathbf{x},y) \sim Q}[\ell(h(\mathbf{x}), y)].\]
+We have seen a very similar expression in homework 3.
+
+The true risk cannot be computed, because $Q$ is unknown. The learning algorithm, however, can approximate the true risk using training examples $S = \{(\vec{x}_i, y_i)\}_{i=1}^{n}$:
+\[R_S(h) = \frac{1}{n} \sum_{i=1}^{n} \ell(h(\mathbf{x}_i), y_i).\]
+As $n$ goes to infinity, the empirical risk converges to the true risk.
+
+
+For example, consider linear regression. The weight vector $\mathbf{w}$ is the model parameter, and the prediction function $h(\mathbf{x}) = \mathbf{w}^\top \mathbf{x}$ is the associated hypothesis. Define our loss function as $\ell(h(\mathbf{x}), y) = (h(\mathbf{x}) - y)^2$. The unregularized linear regression corresponds to \emph{empirical risk minimization} where your \emph{hypothesis class} is restricted to linear functions.
+
+\paragraph{Bagging vs Boosting} Bagging focuses on aggregating outputs of multiple hypotheses independently trained on different (sub)samples of train data. 
+
+Boosting is more holistic approach, which sequentially chooses the weights on hypotheses and the weights on train examples. 
+
+\begin{exercise}
+Can each hypothesis in the ensemble be trained in a parallel manner for bagging? How about for boosting?
+\end{exercise}
+\begin{answer}
+Bagging can be, but boosting cannot be due to its sequential nature.
+\end{answer}
+
+
+\begin{exercise}
+With access to distributed system, is bagging always computationally superior to boosting?
+\end{exercise}
+\begin{answer}
+  Bagging reduces the variance only; its performance is essentially the average performance of the hypotheses in the ensemble. Each hypothesis in a boosted ensemble, on the other hand, needs to only satisfy weak learning hypothesis, which usually takes only a trivial amount of computing power.
+\end{answer}
+
+\section{AdaBoost}
+Let $S = \{(\vec{x}_i, y_i)\}_{i=1}^{n}$ be the training set of examples. Let $\WL$ be a $\gamma$-weak learning algorithm that takes a distribution over input space (as a tuple of weights and samples) and returns a hypothesis (classifier) $f_t$ with error at most $\frac{1}{2} - \gamma$. Let $T$ be the number of iterations.
+
+\begin{algorithm}
+\caption{AdaBoost}
+\KwIn{$S, \WL, T$ as defined in the text}
+  initialize $\mathbf{w}^1 = (1,\ldots,1)$ \\
+  \For{$t = 1,\ldots, T$}{
+    normalize $\vec{w}^{t}$ \\
+    invoke weak learner $f_t = \WL(\vec{w}^t, S)$ \\
+    compute $r_t = \sum_{i=1}^{n} w_i^t \mathbf{1}[y_i \neq f_t(\vec{x}_i)]$ \\
+    let $\displaystyle\alpha_t = \frac{1}{2} \log(\frac{1}{r_t} - 1)$ \\
+    update $\displaystyle w_i^{t+1} = w_i^{t} \exp(-\alpha_t y_i f_t(\vec{x}_i))$ \\
+  }
+  \KwOut{Return $\F_T = \sum_{t=1}^{T} \alpha_t f_t$}
+\end{algorithm}
+
+\begin{theorem}
+  The training error (empirical risk) of AdaBoost satisfies:
+  \[R_S(\F_T) := \frac{1}{n} \sum_{i=1}^{n} \mathbf{1}[\F_T(\vec{x}_i) \neq y_i] \leq \exp(-2 \gamma^2 T).\]
+\end{theorem}
+\begin{proof} For each $t$, let
+\[\textstyle \F_t = \sum_{s=1}^{t} \alpha_s f_s\]
+and let $z_t$ be the normalizing constant for $\vec{w}^t$, which is (by inductive argument)
+\[z_t = \frac{1}{n}\sum_{i=1}^{n} \exp(-y_i \F_t (\vec{x}_i)).\]
+\emph{(Optional paragraph.)} The proof is left for exercise. Roughly speaking, we update $w_i$ in a multiplicative manner, adding $-\alpha_t y_i f_t(\mathbf{x}_i)$ to the exponent every round. So at round $t$, we have $\exp(-\sum_{s=1}^{t} \alpha_s y_i f_s(\mathbf{x}_i)) = \exp(-y_i \F_s(\mathbf{x}_i))$. The base case for $t=1$ gives the $(1/n)$.
+
+
+Note that the exponential function acts as a \emph{smooth} upper bound on the loss of a hypothesis $h$, as $\mathbf{1}[h(\vec{x}) \neq y] \leq \exp(-y h(\vec{x})).$ So,
+$R_S(\F_T) \leq z_T$ and it suffices to show that $z_T \leq \exp(-2\gamma^2 T)$. In other words, our normalization constant $z_t$ coincides with an upper bound on the empirical risk of $\F_t$.
+
+
+Rewrite \[z_T = \frac{z_T}{z_{T-1}} \cdots \frac{z_2}{z_1}.\]
+It suffices to show that for every $t$, \[\frac{z_{t+1}}{z_t} \leq \exp(-2\gamma^2)\]
+This means that the \emph{upper bound} on the empirical risk decreases in a multiplicative manner (fraction of mistakes fixed as opposed to a fixed number of mistakes fixed) every round. The actual empirical risk, however, might oscillate. Higher $\gamma$ means faster decay in the upper bound, as it should.
+
+\emph{The rest of the proof is optional:} Now,
+\begin{align*}
+  \frac{z_{t+1}}{z_t} &= \frac{\sum_{i=1}^{n} \exp(-y_i \F_{t+1}(\vec{x}_i))}{z_t} \\
+  &= \frac{\sum_{i=1}^{n} \exp(-y_i \F_{t}(\vec{x}_i)) \exp(-y_i \alpha_{t+1} f_{t+1}(\vec{x}_i))}{z_t} \\
+  &=\sum_{i=1}^{n} w_i^{t+1} \exp(-y_i \alpha_{t+1} f_{t+1}(\vec{x}_i)) \\
+  &= \exp(-\alpha_{t+1})(1-r_{t+1}) + \exp(\alpha_{t+1})r_{t+1} \\
+  &= \frac{1}{\sqrt{1/r_{t+1} - 1}}(1-r_{t+1}) + \sqrt{1/r_{t+1} - 1} \ r_{t+1} \\
+  &= 2\sqrt{r_{t+1} (1-r_{t+1})} \leq 2 \sqrt{\left(\frac{1}{2} - \gamma\right) \left(\frac{1}{2} + \gamma\right)} = \sqrt{1 - 4\gamma^2}.
+\end{align*}
+To complete the proof, use the inequality $1 - a \leq e^{-a}$.
+\end{proof}
+
+Generally, minimizing a all-or-nothing (0-or-1 or 0-or-infinity) loss function is \emph{computationally} hard in the sense of NP-hardness. Hence, we use a \emph{surrogate loss} function that is continuous and convex. The \emph{hinge loss} for soft-SVM is one such example which converts a 0-or-$\infty$ loss function to a linear-and-flat function. Similarly, AdaBoost can be considered an algorithm that minimizes the exponential loss function. The key difference is that the exponential loss directly upper bounds the classification error, whereas the hinge loss does not.
+
+\begin{exercise}
+Explain the semantics of the variables used in AdaBoost: $\mathbf{w}^t$, $f_t$, $r_t$, $\alpha_t$ and $F_t$.
+\end{exercise}
+
+\begin{exercise} Answer the following questions:
+\begin{itemize}
+  \item Convince yourself that $r_t$ is the  risk of $f_t$ when the true distribution is $\mathbf{w}^t$.
+    \[r_t = \mathbb{E}_{i \sim \mathbf{w}^t}\left[\mathbf{1}[f_t(\vec{x}_i) \neq y_i]\right].  \]
+ \item Is $\alpha_t$ an increasing or decreasing function of $r_t$? Why does it make sense, considering how we construct the final output $\F_T$?
+ \begin{answer}
+   Decreasing. $f_t$ that had higher risk should contribute less to the final output $F_T$.
+ \end{answer}
+ \item The update rule for $w_i$ shows that the amount of change in $w_i^t$ is increasing or decreasing in $\alpha_t$? Why does it make sense?
+  \begin{answer}
+   Increasing. The weight $w_i$ should reflect how difficult it is to classify the $i$-th example correctly, so we can focus on the difficult examples. If $\alpha_t$ is large, then $f_t$ performed well overall and thus it is a ``trustworthy'' hypothesis. Its mistakes should affect our opinion on how difficult each example is, more so than a non-trustworthy hypothesis (low $\alpha_t$) would.
+ \end{answer}
+\end{itemize}  
+\end{exercise}
+
+\begin{exercise}
+Does AdaBoost guarantee a zero test error?
+\end{exercise}
+
+\begin{answer}
+  No. AdaBoost guarantees that if $T$ is sufficently large, then the \emph{empirical risk} ultimately becomes 0. But it says nothing about the test error aka true risk.
+\end{answer}
+
+\section{Generalized Boosting (Optional)}
+
+\subsection{Coordinate Descent}
+Coordinate descent is a variation of gradient descent, where you change a single coordinate per iteration. For example, suppose we want to minimize 
+\[J(a,b) = (a - 2)^2 (b + 1)^2 \]
+% with gradient
+% \[\nabla J(a,b) = (2(a-2)(b+1), (a-2)^2).\]
+
+Fix the learning rate $\eta = .1$. Initialize (arbitrarily) $a=b=0$. In the first round, we change $a$. So, we look at the partial derivative 
+\[\frac{\partial J}{\partial a} = 2(a-2)(b+1)^2\]
+which we evaluate at $a=b=0$ and get $-4$. Now we perform the coordinate descent update and get $a=.4, b=0$. We repeat the process for $b$:
+\[\frac{\partial J}{\partial b} = 2(a-2)^2(b+1)\]
+which we evaluate at the current point and get $5.12$. So we perform the update and get $a=.4,b= -.512$, we repeat this process, and eventually converge to $a=2, b=-1$.
+
+
+\subsection{Boosting as Coordinate Descent}
+We observe that boosting is a slight variation of coordinate descent on a function of $T$ variables, where we do a single sweep through each variable. We use the notation $\hat{\ell}$ (in lecture notes, its $\phi$) to denote the surrogate loss function. Assume that $\partial{\ell}/\partial{\alpha_t}$ is always negative. We first define the objective function
+\[J(\alpha_1, \ldots, \alpha_T) = \frac{1}{n} \sum_{i=1}^{n}\hat{\ell}\left(y_i \sum_{t=1}^{T} \alpha_{t}f_t (\vec{x}_i)\right) =  \frac{1}{n} \sum_{i=1}^{n}\hat{\ell}\left(y_i \sum_{t=1}^{T} \F_t (\vec{x}_i)\right).\]
+
+We initialize $\alpha_t = 0$ for all $t$, and we do coordinate descent. At $t$-th iteration, we have
+\[J(\alpha_1, \ldots, \alpha_{T}) = \frac{1}{n} \sum_{i=1}^{n}\hat{\ell}\left(y_i \sum_{s=1}^{t-1} \alpha_{s}f_s + y_i \alpha_t f_t (\vec{x}_i)\right),\]
+where $\alpha_{t+1}, \ldots, \alpha_T$ terms are ommitted because they are still 0.
+
+Hence, we update $\alpha_t$ using the partial derivative:
+\[\frac{\partial J}{\partial \alpha_t} = \frac{1}{n} \sum_{i=1}^{n} \hat{\ell}'_t(y_i \F_{t-1}(\vec{x}_i) + \alpha_t y_i f_t(\vec{x}_i)) y_i f_t(\vec{x}_i)\]
+where $\hat{\ell}'_t = \frac{\partial \hat{\ell}}{\partial \alpha_t}$ as a shorthand notation.
+
+
+But we also have to choose $f_t$ which is not a number but a hypothesis. A smart way of choosing $f_t$ is such that the derivative is the largest, so we get the steepest coordinate descent update; that is, we choose $f_t$ to maximize the (directional) derivative:
+\[\arg\max_{f_t} \frac{\partial J_t}{\partial \alpha_t}\Big|_{\alpha_t = 0} = \arg\max_{f_t} \frac{1}{n} \sum_{i=1}^{n} \hat{\ell}(y_i \F_{t-1}) y_i f_t = \arg\min_{f_t} \frac{1}{n} \sum_{i=1}^{n} \frac{\hat{\ell}'_t(y_i \F_{t-1})}{\sum_{i=1}^{n}\hat{\ell}_t'(y_i \F_{t-1})} y_i f_t.\]
+
+The last equality is because $\ell'$ is always negative. We cannot compute the exact minimizer (if that is the case, we don't even need boosting!). Instead, we have an algorithm $\WL$ which will ``try'' to minimize the above and return a weak learning hypothesis $f_t$.
+
+Once we fix $f_t$, it turns out that we can be very smart with how we update $\alpha_t$, instead of doing the standard coordinate descent update. In particular, we update $\alpha_t$ to be the minimizer:
+\[\alpha_t = \arg\min_{\alpha} J(\alpha_{1},\ldots,\alpha_{t-1},\alpha).\]
+
+% \paragraph{AdaBoost as Coordinate Descent}
+% For AdaBoost, $\hat{\ell}$ is the exponential loss $\hat{\ell}(u) = \exp(-u)$. So,
+% \begin{align*}
+% \sum w_i \exp(-y_i f(\vec{x}_i) \alpha_t) 
+% &\leq \sum_{i} \frac{1 -y_i f(\vec{x}_i)}{2} w_i \exp(\alpha^t) + \sum_{i} \frac{1 + y_i f(\vec{x}_i)}{2} w_i \exp(- \alpha^t) \\
+% &= \frac{1}{2} \exp(\alpha^{t}) - \frac{1 - r_t}{2} \exp(-\alpha_t)
+% \end{align*}
+
+\end{document}
