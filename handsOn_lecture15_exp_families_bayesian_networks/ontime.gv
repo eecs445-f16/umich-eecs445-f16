@@ -1,0 +1,13 @@
+digraph {
+    w [label="Wake up on time", xlabel="P(W)"];
+    r [label="Roomate long shower", xlabel="P(R)"];
+    t [label="Traffic", xlabel="P(T)"];
+    s [label="Bus stop on time", xlabel="P(S)"];
+    b [label="Bus on time", xlabel="P(B)"];
+    c [label="Class on time", xlabel="P(C)"];
+    w -> s;
+    r -> s;
+    t -> b;
+    s -> c;
+    b -> c;
+}
