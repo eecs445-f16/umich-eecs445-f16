@@ -1,0 +1,8 @@
+digraph {
+    E [style="filled"];
+    A->C;
+    A->E;
+    B->C;
+    B->D;
+    C->E;
+}
