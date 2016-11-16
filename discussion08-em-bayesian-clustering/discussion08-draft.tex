@@ -1,0 +1,109 @@
+\documentclass{discussion}
+
+\usepackage{framed}
+\usepackage[position=b]{subcaption}
+\DeclareMathOperator{\Parents}{Parents}
+\DeclareMathOperator{\NonDesc}{NonDesc}
+\newcommand{\G}{\mathcal{G}}
+\newcommand{\I}{\mathcal{I}}
+\linespread{1.0}
+\begin{document}
+
+% Lecture Info
+\lecture{8}{EM}{Benjamin R. Bray and Chansoo Lee}
+
+{\Huge \bf This is a draft}
+%\begin{exercise}
+%\begin{example}
+
+%%%% INTRODUCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Motivation: Partially observed data
+
+\section{Unsupervised Naive Bayes}
+We get unlabeled training data $\{\x^{(i)}\}_{i=1}^{n}$ where each data is a binary feature vector: $\x^{(i)} \in \{0,1\}^D$.
+
+We don't have sufficient statistics ($N_c$ and $N_{cdm}$) to compute the MLE for Naive Bayes, because we are missing class labels. A simple approach is to arbitrariliy or randomly fill in the labels and then compute the MLE. This approach, however, ignores the probabilistic relationship between features and the class label.
+
+This problem is difficult because we are trying to solve two problems together: completing missing values and estimating the model parameters. Each problem, however, is easy when we have the solution to the other. Given complete data, we can estimate parameters. Given model parameters, we can find the distribution of the missing values $P(y_d = c | x; \theta, \pi) \propto \pi_{c} \prod_{d=1}^{D} \theta_{c d x_d}$. To solve this ``chicken and egg'' problem, we use an alternating optimization technique called EM.
+
+\subsection{Soft assignment EM}
+
+\begin{itemize}
+    \item Initiliaze the parameters to the values that will break the symmetry, and then repeat:
+    \item In the E-step, we fill in the missing data. We often say that we compute the \emph{expected sufficient statistics}, because we fill in the missing data only probabilistically.
+    \item In the M-step, update the model parameters to be the MLE based on new expected sufficient statistics.
+\end{itemize}
+
+
+Suppose the two data points are $\x^{(1)} = (0, 1)$ and $\x^{(2)} = (1,1)$.
+
+
+\paragraph{Case Study: Binary Unsupervised Naive Bayes}
+
+Initilaize $\pi_c = 0.7, \theta_{111} = 0.9, \theta_{011} = 0.3, \theta_{121} = 0.6, \theta_{021} = 0.2$.
+
+Compute the probability for each assignment of missing values:
+\[
+\begin{tabu}{c|c|c|c}
+y^{1} & y^{2} & \text{unnormalized probability} & \text{probability} \\
+\hline
+1 & 1 & (0.7)(0.1)(0.6)(0.7)(0.9)(0.6) = 0.015876 & 0.4773\\
+1 & 0 & (0.7)(0.1)(0.6)(0.3)(0.3)(0.2) = 0.000756 & 0.0227\\
+0 & 1 & (0.3)(0.7)(0.2)(0.7)(0.9)(0.6) = 0.015876 & 0.4773\\
+0 & 0 & (0.3)(0.7)(0.2)(0.3)(0.3)(0.2) = 0.000756 & 0.0227\\
+\end{tabu}
+\]
+
+Compute the sufficient statistics:
+
+$\overline{N_1} = (0.4773)(2) + (0.0227) + (0.4773) = 1.4546$
+
+$\overline{N_{111}} = (0.4773) + (0.4773) = 0.9546$
+
+$\overline{N_{121}} = (0.4773)2 + (0.0227) + (0.4773) = 1.4546$
+
+
+M-step:
+
+$\pi_1 = 1.4546 / 2 = 0.7273$.
+
+$\theta_{111} = N_{111} / N_{1} = 0.6563$.
+
+$\theta_{121} = N_{121} / N_{1} = 1$.
+
+
+\paragraph{Efficient E-step}
+
+Instead of the joint distribution of missing values, we can consider them independently. Mathematically,
+\begin{align*}
+N_1 &= P(y^1 = 1, y^2 = 1) + P(y^1 = 1, y^2 = 1) + P(y^1 = 1, y^2 = 0) + P(y^1 = 0, y^2 = 1) \\
+&= (P(y^1 = 1, y^2 = 1) + P(y^1 = 1, y^2 = 0)) + (P(y^1 = 1, y^2 = 1) + P(y^1 = 0, y^2 = 1)) \\
+&= P(y^1 = 1) + P(y^2 = 1)    
+\end{align*}
+
+With complete data, each instance contributes a full count of 1. With missing data, each instance contributes a fraction of the full count to each category such that it sums to 1.
+
+Compute the probability for each assignment of missing values:
+
+\[P(y^1 = 1) = \frac{(0.7)(0.1)(0.6)}{(0.7)(0.1)(0.6) + (0.3)(0.7)(0.2)} = 0.5 \]
+
+\[P(y^2 = 1) = \frac{(0.7)(0.9)(0.6)}{(0.7)(0.9)(0.6) + (0.3)(0.3)(0.2)} = 0.9546 \]
+
+\subsection{Hard assignment EM}
+Sometimes it is difficult (due to mathematical complexity or limited computation time) to handle fractional contribution of each data point. In that case, we simply assign the missing value with the highest probability, breaking ties arbitrarily.
+
+Example: $k$-means as a hard-assignment EM for GMM clustering.
+
+\begin{exercise}
+What are the differences between soft and hard assignment EM?
+\end{exercise}
+	The hard-assignment EM explores the combinatorial space of missing variable assignments. The soft-assignment EM, on the other hand, explores the continuous space.
+
+	In clustering, the hard assignment EM tends to amplify the contrast among classes, while soft assignment EM attempts to model mixed-class memberships.
+
+\subsection{Random assignment EM}
+
+A slight variation of the hard assignment. We sample the missing values according to the computed distribution.
+
+\end{document}
