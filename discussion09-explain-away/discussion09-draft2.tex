@@ -19,7 +19,7 @@
 Recall the HW5 Problem 3. 
 
 \begin{lemma} 
-\[P(t_1 | d_1) < P(t_1 | d_0)\]
+\(P(t_1 | d_1) < P(t_1 | d_0)\)
 \end{lemma}
 Intuitively, this statement is kind of obvious. The person is on good diet $(d_1)$ should be less likely to test for high cholesterol $(t_1)$
 \begin{proof}
@@ -37,10 +37,9 @@ meaning people with good diet is less likely to have a high cholesterol than tho
 Similarly,
 \[P(t_1 | c_1) > P(t_1 | c_0).\]
 
-We write
-\[P(T | D) = \sum_{c} P(T, C = c | D) = \sum_{c} P(T| C = c) P(C = c | D)
+Because $T$ and $D$ are independent given $C$, we can write
+\[P(T | D) = \sum_{c} P(T, C = c | D) = \sum_{c} P(T| C = c) P(C = c | D).
 \]
-The second equality is because $T$ and $D$ are independent given $C$.
 
 Now,
 \[
@@ -48,15 +47,19 @@ P(t_1 | d_1) = P(t_1 | c_1) P(c_1 | d_1) +P(t_1 | c_0) P(c_0 | d_1)
 \] 
 and
 \[P(t_1 | d_0) = P(t_1 | c_1) P(c_1 | d_0)
-+P(t_1 | c_1) P(c_1 | d_0)
++P(t_1 | c_0) P(c_0 | d_0)
 \]
 
 We compute the difference:
-\[P(t_1 | d_0) - P(t_1 | d_1) 
-= P(t_1 | c_1) (P(c_1 | d_0) - P(c_1 | d_1))
-+ P(t_1 | c_0) (P(c_0 | d_0) - P(c_0 | d_1))
-\]
-which is less than 0 because both terms in the parentheses are negative.
+\begin{align*}
+P(t_1 | d_0) - P(t_1 | d_1) 
+&= P(t_1 | c_1) (P(c_1 | d_0) - P(c_1 | d_1))
++ P(t_1 | c_0) (P(c_0 | d_0) - P(c_0 | d_1)) \\
+&= P(t_1 | c_1) (P(c_1 | d_0) - P(c_1 | d_1))
++ P(t_1 | c_0) \big(1 - P(c_1 | d_0) - (1 - P(c_1 | d_1))\big) \\
+& = \big(P(t_1 | c_1) - P(t_1 | c_0)\big) \big(P(c_1 | d_0) - P(c_1 | d_1)\big)
+\end{align*}
+which is positive because both terms in the parentheses are positive.
 \end{proof}
 
 \begin{corollary}
