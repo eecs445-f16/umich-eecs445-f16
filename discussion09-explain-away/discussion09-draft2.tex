@@ -1,0 +1,136 @@
+\documentclass{discussion}
+
+\usepackage{framed}
+\usepackage[position=b]{subcaption}
+\DeclareMathOperator{\Parents}{Parents}
+\DeclareMathOperator{\NonDesc}{NonDesc}
+\newcommand{\G}{\mathcal{G}}
+\newcommand{\I}{\mathcal{I}}
+\linespread{1.0}
+\begin{document}
+
+% Lecture Info
+\lecture{9}{Explaining Away}{Benjamin R. Bray and Chansoo Lee}
+
+
+%%%% INTRODUCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Probabilistic influence}
+
+Recall the HW5 Problem 3. 
+
+\begin{lemma} 
+\[P(t_1 | d_1) < P(t_1 | d_0)\]
+\end{lemma}
+Intuitively, this statement is kind of obvious. The person is on good diet $(d_1)$ should be less likely to test for high cholesterol $(t_1)$
+\begin{proof}
+From the factorization theorem, $T$ is independent of all variables other than $C$ given $D$. So, 
+\begin{equation}
+\label{eq:t_d_ind}
+	P(T | D, u) = P(T | D)
+\end{equation} for all values of $u$.
+
+Now from the definition, we have that
+\begin{equation}
+	P(c_1 | d_1) < P(c_1 | d_0)
+\end{equation}
+meaning people with good diet is less likely to have a high cholesterol than those with bad diet. We were able to eliminate the conditioning on $u$ because of \eqref{eq:t_d_ind}.
+Similarly,
+\[P(t_1 | c_1) > P(t_1 | c_0).\]
+
+We write
+\[P(T | D) = \sum_{c} P(T, C = c | D) = \sum_{c} P(T| C = c) P(C = c | D)
+\]
+The second equality is because $T$ and $D$ are independent given $C$.
+
+Now,
+\[
+P(t_1 | d_1) = P(t_1 | c_1) P(c_1 | d_1) +P(t_1 | c_0) P(c_0 | d_1)
+\] 
+and
+\[P(t_1 | d_0) = P(t_1 | c_1) P(c_1 | d_0)
++P(t_1 | c_1) P(c_1 | d_0)
+\]
+
+We compute the difference:
+\[P(t_1 | d_0) - P(t_1 | d_1) 
+= P(t_1 | c_1) (P(c_1 | d_0) - P(c_1 | d_1))
++ P(t_1 | c_0) (P(c_0 | d_0) - P(c_0 | d_1))
+\]
+which is less than 0 because both terms in the parentheses are negative.
+\end{proof}
+
+\begin{corollary}
+\[	P(t_1 | d_1) < P(t_1)\]
+\end{corollary}
+\begin{proof}
+	Note that 
+	\[P(t_1) = P(t_1 | d_1) p(d_1) + p(t_1 | d_0) p(d_0) < P(t_1 | d_1) p(d_1) + p(t_1 | d_1) p(d_0) = P(t_1 | d_1)\qedhere\]
+\end{proof}
+
+\begin{lemma}
+\[	P(d_1 | e_1, m_1) < P(d_1 | m_1)\]
+\end{lemma}
+\begin{proof}
+\[	P(d_1 | e_1, m_1)
+ = P(m_1 | d_1, e_1) P(d_1) / P(m_1)
+ > P(m_1 | d_1, e_0) P(d_1) / P(m_1)
+ = P(d_1 | e_0, m_1).
+\]
+So,
+\[P(d_1 | m_1) = P(d_1 | m_1, e_0) P(e_0) + P(d_1 | m_1, e_1)P(e_1) < P(d_1 | m_1, e_1) P(e_0) + P(d_1 | m_1, e_1)P(e_1) = P(d_1 | m_1,e_1)\]
+\end{proof}
+
+\section{Explaining Away}
+The explaining away is the following phenomenon:
+\begin{equation}
+\label{eq:explainaway}
+	P(h_1 | b_0, e_1) < P(h_1 | b_1, e_1).
+\end{equation}
+It follows that
+\[P(h_1 | b_0, e_1) < P(h_1 | e_1)< P(h_1 | b_1, e_1).\]
+Let's explore the sufficient and necessary condition for this to happen.
+
+By the Bayes rule,
+\[P(h_1 | e_1, B) = P(e_1 | h_1, B) \frac{P(h_1 | B)}{P(e_1 | B)} = P(e_1 | h_1, B) \frac{P(h_1)}{P(e_1 | B)}\]
+since $H$ and $B$ are independent.
+
+
+%  \eqref{eq:explainaway} is equivalent to 	
+% \[\frac{P(e_1 | h_1, b_0)}{P(e_1 | b_0)} < \frac{P(e_1 | h_1, b_1)}{P(e_1 | b_1)}	\]
+% which is also equivalent to
+% \begin{equation}
+% \label{eq:explainaway_ratio}
+% \frac{P(e_1 | b_0)}{P(e_1 | h_1, b_0)} > \frac{P(e_1 | b_1)}{P(e_1 | h_1, b_1)}
+% \end{equation}
+
+Note that
+\[P(e_1 | B) = P(e_1 | h_1, B)P(h_1) + P(e_1 | h_0, B)P(h_0)\]
+
+So, 
+\[\frac{1}{P(h_1|e_1,B)}
+= 1 + \frac{P(e_1 | h_0, B)P(h_0)}{P(e_1|h_1,B)P(h_1)}\]
+
+Hence, an equivalent statement of \eqref{eq:explainaway}
+\[	1/P(h_1 | b_0, e_1) > 1/P(h_1 | b_1, e_1)
+\]
+is equivalent to 
+\[1 + \frac{P(e_1 | h_0, b_0)P(h_0)}{P(e_1|h_1,b_0)P(h_1)} > 1 + \frac{P(e_1 | h_0, b_1)P(h_0)}{P(e_1|h_1,b_1)P(h_1)}
+\]
+which simplifies to
+\[\frac{P(e_1 | h_0, b_0)}{P(e_1|h_1,b_0)} > \frac{P(e_1 | h_0, b_1)}{P(e_1|h_1,b_1)}.\]
+% and similarly,
+% \[P(e_1 | b_1) = P(e_1 | h_1, b_1)P(h_1) + P(e_1 | h_0, b_1)P(h_0)\]
+
+Finally, we rearrange this:
+\begin{equation}
+\label{eq:explainaway_condition}
+	\frac{P(e_1 | h_0, b_0)}{P(e_1 | h_0, b_1)} > \frac{P(e_1|h_1,b_0)}{P(e_1|h_1,b_1)}.
+\end{equation}
+
+So, the time constraint has more dramatic effect on the people that are not health-conscious. Health-conscious people are less likely to exercise if they are busy, but this probability drop is much less severe because they try to make time for exercise.
+
+\begin{exercise}
+	Give a realistic example where \eqref{eq:explainaway_condition} fails to hold.
+\end{exercise}
+
+\end{document}
