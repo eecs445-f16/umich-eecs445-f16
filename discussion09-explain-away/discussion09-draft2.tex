@@ -70,18 +70,18 @@ which is positive because both terms in the parentheses are positive.
 	\[P(t_1) = P(t_1 | d_1) p(d_1) + p(t_1 | d_0) p(d_0) > P(t_1 | d_1) p(d_1) + p(t_1 | d_1) p(d_0) = P(t_1 | d_1)\qedhere\]
 \end{proof}
 
-\begin{lemma}
-\[	P(d_1 | e_1, m_1) < P(d_1 | m_1)\]
-\end{lemma}
-\begin{proof}
-\[	P(d_1 | e_1, m_1)
- = P(m_1 | d_1, e_1) P(d_1) / P(m_1)
- > P(m_1 | d_1, e_0) P(d_1) / P(m_1)
- = P(d_1 | e_0, m_1).
-\]
-So,
-\[P(d_1 | m_1) = P(d_1 | m_1, e_0) P(e_0) + P(d_1 | m_1, e_1)P(e_1) < P(d_1 | m_1, e_1) P(e_0) + P(d_1 | m_1, e_1)P(e_1) = P(d_1 | m_1,e_1)\]
-\end{proof}
+% \begin{lemma}
+% \[	P(d_1 | e_1, m_1) < P(d_1 | m_1)\]
+% \end{lemma}
+% \begin{proof}
+% \[	P(d_1 | e_1, m_1)
+%  = P(m_1 | d_1, e_1) P(d_1) / P(m_1)
+%  > P(m_1 | d_1, e_0) P(d_1) / P(m_1)
+%  = P(d_1 | e_0, m_1).
+% \]
+% So,
+% \[P(d_1 | m_1) = P(d_1 | m_1, e_0) P(e_0) + P(d_1 | m_1, e_1)P(e_1) < P(d_1 | m_1, e_1) P(e_0) + P(d_1 | m_1, e_1)P(e_1) = P(d_1 | m_1,e_1)\]
+% \end{proof}
 
 \section{Explaining Away}
 The explaining away is the following phenomenon:
@@ -135,5 +135,9 @@ So, the time constraint has more dramatic effect on the people that are not heal
 \begin{exercise}
 	Give a realistic example where \eqref{eq:explainaway_condition} fails to hold.
 \end{exercise}
+
+\paragraph{Answer.}	In the same graphical structure as $H,E,B$ but replace $H$ with horrible weather, $B$ with road block (due to construction) and $E$ with extremely long commute. 
+
+	Suppose the road can't handle traffic given either of the bad conditions. The difference between $P(e_1| h_0, b_0)$ and $P(e_1 | h_0, b_1)$ is big, making the LHS small. But if the road is already hit with horrible weather, then the additional effect of road block is small, so the RHS is big.
 
 \end{document}
