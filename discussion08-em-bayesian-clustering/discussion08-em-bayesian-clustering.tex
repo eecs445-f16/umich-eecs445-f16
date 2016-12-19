@@ -62,7 +62,7 @@ This leads to the EM algorithm, an alternating optimization technique. EM solves
 
 Suppose the training set has two data points  $\x^{(1)} = (0, 1)$ and $\x^{(2)} = (1,1)$; for clarity, we note that the dimensions are: $N=2, C=2$, $D = 2$, and $M = 2$. In this case study, our binary features and labels take values $\{0,1\}$ instead of $\{1,2\}$.
 
-\paragraph{Initilization} Suppose our random initialization gives $\pi_c = 0.7, \theta_{111} = 0.9, \theta_{011} = 0.3, \theta_{121} = 0.6, \theta_{021} = 0.2$.
+\paragraph{Initilization} Suppose our random initialization gives $\pi_1 = 0.7, \theta_{111} = 0.9, \theta_{011} = 0.3, \theta_{121} = 0.6, \theta_{021} = 0.2$.
 
 \paragraph{Iteration 1: E-step} Compute the probability for each assignment of missing values\footnote{Unnoramlized probability is $P(\x,y)$ and the normalized probability is $P(y | \x)$.}.
 \[
