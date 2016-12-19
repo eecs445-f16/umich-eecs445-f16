@@ -137,6 +137,9 @@ It is also easy to note that
 This gives a very intuitive explanation of the EM algorithm on unsupervised Naive Bayes. Given labeled (fully observed) data, we replace the probabilities with indicator functions; each example contributes one count to either $N_{1}$ or $N_0$. Given unlabeled (partially observed) data, each instance \emph{distributes} a total of one count over $N_1$ and $N_0$.
 
 
+\begin{exercise} Numerically work out the second iteration of EM, using the efficient E-step. 
+\end{exercise}
+
 \subsection{Hard assignment EM}
 Sometimes it is difficult (due to mathematical complexity or limited computation time) to handle fractional contribution of each data point. In such applications, we can make E-step assign the missing values with the highest probability, breaking ties arbitrarily. M-step becomes the MLE given fully observed data.
 
