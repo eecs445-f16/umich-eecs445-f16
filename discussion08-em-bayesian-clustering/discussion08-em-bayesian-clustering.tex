@@ -1,0 +1,159 @@
+\documentclass{discussion}
+
+\usepackage{framed}
+\usepackage[position=b]{subcaption}
+\DeclareMathOperator{\Parents}{Parents}
+\DeclareMathOperator{\NonDesc}{NonDesc}
+\newcommand{\G}{\mathcal{G}}
+\newcommand{\I}{\mathcal{I}}
+\linespread{1.0}
+\begin{document}
+
+% Lecture Info
+\lecture{8}{EM}{Chansoo Lee}
+%\begin{exercise}
+%\begin{example}
+
+%%%% INTRODUCTION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\D}{\mathcal{D}}
+\section{Supervised Naive Bayes}
+In supervised learning of Naive Bayes, we get \emph{labeled} training data $\D = \{(\x^{(i)}, y^{(i)})\}_{i=1}^{N}$, where $\x^{(i)} \in \{1,\ldots,M\}^{D}$ and $y^{(i)} \in \{ 1,\ldots, C\}$. 
+ The estimation (training) problem is to find the maximum log likelihood estimate parameters. The log-likelihood function breaks down into a sum of simple terms, which we can easily differentiate: 
+% \begin{align}
+% 	\sum_{i=1}^{N} \log P(y^{(i)}, \x^{(i)}; \pi, \theta)
+% 	&= \sum_{i=1}^{N} \log P({y^{(i)}})P(y^{(i)} | \x^{(i)}) \label{eq:mle} \\ 
+% 	&= \sum_{i=1}^{N} \left( \log \pi_{y^{(i)}} + \sum_{i=1}^{D}\log \theta_{y^{(i)}d\x^{(i)}_d} \right)
+% \end{align}
+\begin{align}
+	\sum_{\x,y \in \mathcal{D}} \log P(y, \x; \pi, \theta)
+	&= \sum_{\x,y \in \mathcal{D}} \big( \log P({y}) + \log P(y | \x)\big) \label{eq:mle} \\ 
+	&= \sum_{\x,y \in \mathcal{D}} \left( \log \pi_{y} + \sum_{i=1}^{D}\log \theta_{ydx_d} \right). \label{eq:mle-param}
+\end{align}
+Because each log term involves only one parameter, when we differentiate the above expression with respect to any model parameter $\pi_c$ or $\theta_{cdm}$, we have a very simple expression, which we can set it to zero and easily solve for.
+
+The closed-form solution shows that \textbf{sufficient statistics} required to solve the above problem are counts: $N_c$, number of examples in category $c$ and $N_{cdm}$, number of examples in category $c$ with $d$-th feature taking value $M$. 
+
+\section{Unsupervised Naive Bayes}
+In \textbf{unsupervised Naive Bayes}, we get unlabeled training data $\{\x^{(i)}\}_{i=1}^{n}$ where each data is a binary feature vector: $\x^{(i)} \in \{0,1\}^D$. The estimation problem is to find the maximum log likelihood estimate parameters for our \emph{partially observed data}:
+\begin{align}
+\label{eq:em-mle}
+\sum_{\x \in \mathcal{D}} \log P(\x; \pi, \theta)
+&= \sum_{\x \in \mathcal{D}} \log \left(\sum_{c=1}^{C} P(\x,y = c)\right) \\
+&= \sum_{\x \in \mathcal{D}} \log\left(\sum_{c=1}^{C} \Big(\pi_{c} \prod_{d=1}^{D} \theta_{cdx_d} \Big) \right) \label{eq:em-mle-param}.
+\end{align}
+Since our probabilstic model does not directly define the marginal distribution over $\x$, we have to marginalize $y$ out from the joint distribution \eqref{eq:em-mle}. As a result, there is now a summation inside the logarithm, which makes derivatives messy. If you want to check, take derivatives with respect to $\pi_1$ of \eqref{eq:mle-param} and \eqref{eq:em-mle-param}.\footnote{An alternative explanation for the hardness of unsupervised setting is that the sufficient statistics to compute the MLE estimates are not provided.
+}
+ 
+The important observation is that we can break this hard problem into two easy problems: (1) If we fix the model parameters, then it is a simple prediction step to compute the conditional distribution of the missing values: $P(y_d = c | \x; \theta, \pi) \propto \pi_{c} \prod_{d=1}^{D} \theta_{c d x_d}$. (2) If we fill in the missing values, it is the supervised learning problem that we know how to solve.
+
+This leads to the EM algorithm, an alternating optimization technique. EM solves the generic question of: \emph{how do we find the MLE parameters given partially observed data in a principled manner that properly accounts for the dependence among random variables in our probabilstic model?}
+
+\section{Soft assignment EM}
+
+\begin{itemize}
+    \item Initiliaze the parameters to the values that will break the symmetry, and then repeat:
+    \item In the E-step, we compute the distribution of the missing data. We often say that we compute the \emph{expected sufficient statistics}, because we fill in the missing data only probabilistically.
+    \item In the M-step, update the model parameters to be the MLE based on new expected sufficient statistics.
+\end{itemize}
+
+
+\subsection{Case Study: Binary Unsupervised Naive Bayes}
+
+Suppose the training set has two data points  $\x^{(1)} = (0, 1)$ and $\x^{(2)} = (1,1)$; for clarity, we note that the dimensions are: $N=2, C=2$, $D = 2$, and $M = 2$. In this case study, our binary features and labels take values $\{0,1\}$ instead of $\{1,2\}$.
+
+\paragraph{Initilization} Suppose our random initialization gives $\pi_c = 0.7, \theta_{111} = 0.9, \theta_{011} = 0.3, \theta_{121} = 0.6, \theta_{021} = 0.2$.
+
+\paragraph{Iteration 1: E-step} Compute the probability for each assignment of missing values\footnote{Unnoramlized probability is $P(\x,y)$ and the normalized probability is $P(y | \x)$.}.
+\[
+\begin{tabu}{c|c|c|c}
+y^{(1)} & y^{(2)} & \text{unnormalized probability} & \text{noramlized probability} \\
+\hline
+1 & 1 & (0.7)(0.1)(0.6)(0.7)(0.9)(0.6) = 0.015876 & 0.4773\\
+1 & 0 & (0.7)(0.1)(0.6)(0.3)(0.3)(0.2) = 0.000756 & 0.0227\\
+0 & 1 & (0.3)(0.7)(0.2)(0.7)(0.9)(0.6) = 0.015876 & 0.4773\\
+0 & 0 & (0.3)(0.7)(0.2)(0.3)(0.3)(0.2) = 0.000756 & 0.0227\\
+\end{tabu}
+\]
+The table reads as: the missing $y$ value of the $i$-th example is assigned the value specified in column $i$, with probability in column 4.
+
+\begin{exercise}
+	Compute the expected sufficient statistics using the table.
+\end{exercise}
+\begin{proof}
+ Consider $\overline{N_1}$, the \emph{expected} number of examples with class label $y = 1$:% = E_{y^{(1)},y^{(2)}}$
+\begin{itemize}
+		\item row 1 shows with probability 0.4773 there are two instances with $y = 1$. 
+		\item row 2 shows with probability 0.0227 there is one instance with $y = 1$.
+		\item row 3 shows with probability 0.4773 there is one instance with $y = 1$.
+		\item row 4 shows with probability 0.0227 there is zero instance with $y = 1$.
+		\item Therefore, \[\overline{N_1} = (0.4773)(2) + (0.0227)(1) + (0.4773)(1) + (0.0227)(0) = 1.4546.\]
+		\item Because class labels are binary, \[\overline{N_0} = \overline{N} - \overline{N_1} = 2 - 1.4546 = 0.5454\]
+\end{itemize}
+
+ Note that given fully observed data, we would do a simple counting where each example adds either 0 or 1. Each example adds 1 to $N_c$ for a single $c$. But for the EM, each example adds an a \emph{fraction} between 0 and 1, such that it \emph{distributes} the count 1 across all $N_c$'s.
+
+ Consider $\overline{N_{111}}$, the \emph{expected} number of examples with class label $y=1$ and first feature taking value 1.
+\begin{itemize}
+		\item row 1 shows with probability 0.4773, our train set is $((0,1), 1)$ and $((1,1), 1)$. So there is one example with $y=1$ and $x_1 = 1$.
+		\item row 2 shows with probability 0.0227, our train set is $((0,1), 1)$ and $((1,1), 0)$. So there is zero example with $y=1$ and $x_1 = 1$.
+		\item row 3 shows with probability 0.4773, our train set is $((0,1), 0)$ and $((1,1), 1)$. So there is one example with $y=1$ and $x_1 = 1$. 
+		\item row 4 shows with probability 0.0227, our train set is $((0,1), 0)$ and $((1,1), 0)$. So there is zero example with $y=1$ and $x_1 = 1$.
+		\item Therefore, \[\overline{N_{111}} = (0.4773)(1) + (0.0227)(0)+ (0.4773)(1) + (0.0227)(0) = 0.9546.\]
+		\item Because features are binary, $\overline{N_{110}} = \overline{N_{1}} - \overline{N_{111}} = 1.4546 - 0.9546 = 0.5$
+\end{itemize}
+Similarly, we can compute the rest of the parameters. For example,
+\[\overline{N_{121}} = (0.4773)2 + (0.0227) + (0.4773) = 1.4546 \qedhere\]
+\end{proof}
+
+\paragraph{Iteration 1: M-step} It's the same MLE parameter computation as in supervised Naive Bayes, except we use \emph{expected} counts instead of counts.
+
+\[\pi_1 =\frac{\overline{N_1}}{N} = 1.4546 / 2 = 0.7273.\]
+
+\[\theta_{111} = \frac{\overline{N_{111}}}{\overline{N_{1}}} = 0.6563.\]
+
+\[\theta_{121} = \frac{\overline{N_{121}}}{\overline{N_{1}}} = 1.\]
+
+
+\paragraph{Efficient E-step}
+
+The presented implementation of E-step takes exponential time $\Omega(N^C)$, because it computes the full joint distribution over $N$ labels. Indeed, you might have noticed a bit of redundancy when we computed the expected counts.
+
+The trick is that we can compute the distribution of the unobserved variables indepnedently, making it $O(NC)$ computation. Mathematically,
+\begin{align*}
+\overline{N_1} &= P(y^{(1)} = 1, y^{(2)} = 1) + P(y^{(1)} = 1, y^{(2)} = 1) + P(y^{(1)} = 1, y^{(2)} = 0) + P(y^{(1)} = 0, y^{(2)} = 1) \\
+&= (P(y^{(1)} = 1, y^{(2)} = 1) + P(y^{(1)} = 1, y^{(2)} = 0)) + (P(y^{(1)} = 1, y^{(2)} = 1) + P(y^{(1)} = 0, y^{(2)} = 1)) \\
+&= P(y^{(1)} = 1) + P(y^{(2)} = 1)    
+\end{align*}
+Then we compute the probability distributions for missing values, independently for each example:
+\[P(y^{(1)} = 1) = \frac{(0.7)(0.1)(0.6)}{(0.7)(0.1)(0.6) + (0.3)(0.7)(0.2)} = 0.5 \]
+\[P(y^{(2)} = 1) = \frac{(0.7)(0.9)(0.6)}{(0.7)(0.9)(0.6) + (0.3)(0.3)(0.2)} = 0.9546 \]
+
+It is also easy to note that
+\[\overline{N_0} = 2 -  \overline{N_1} = P(y^{(1)} = 0) + P(y^{(2)} = 0).
+\]
+
+
+This gives a very intuitive explanation of the EM algorithm on unsupervised Naive Bayes. Given labeled (fully observed) data, we replace the probabilities with indicator functions; each example contributes one count to either $N_{1}$ or $N_0$. Given unlabeled (partially observed) data, each instance \emph{distributes} a total of one count over $N_1$ and $N_0$.
+
+
+\subsection{Hard assignment EM}
+Sometimes it is difficult (due to mathematical complexity or limited computation time) to handle fractional contribution of each data point. In such applications, we can make E-step assign the missing values with the highest probability, breaking ties arbitrarily. M-step becomes the MLE given fully observed data.
+
+\begin{exercise}
+	Show that $k$-means is equivalent to the hard-assignment EM for GMM clustering with fixed identiyy covariance matrices.
+\end{exercise}
+
+\begin{exercise}
+What are the differences between soft and hard assignment EM?
+\end{exercise}
+	The hard-assignment EM explores the combinatorial space of missing variable assignments. The soft-assignment EM, on the other hand, explores the continuous space.
+
+	In clustering, the hard assignment EM tends to amplify the contrast among classes, while soft assignment EM attempts to model mixed-class memberships.
+
+\subsection{Random assignment EM}
+
+In E-step, we compute the distribution over missing values and sample accordingly, instead of computing the expected statistics. Use the random samples to fill in the missing data. M-step becomes the MLE given fully observed data.
+
+
+\end{document}
